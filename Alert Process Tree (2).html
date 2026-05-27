@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alert Process Tree</title>
+<style>
+* {
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+}
+
+body {
+background-color: #0d1117;
+color: #c9d1d9;
+font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+padding: 2rem;
+line-height: 1.5;
+}
+
+.container {
+max-width: 1400px;
+margin: 0 auto;
+}
+
+h1 {
+color: #58a6ff;
+margin-bottom: 0.5rem;
+font-size: 1.8rem;
+}
+
+h2 {
+color: #58a6ff;
+margin-bottom: 1rem;
+font-size: 1.3rem;
+}
+
+.header-info {
+color: #8b949e;
+margin-bottom: 2rem;
+padding-bottom: 1rem;
+border-bottom: 2px solid #21262d;
+font-size: 0.9rem;
+}
+
+.alert-title {
+color: #f0883e;
+font-size: 1.2rem;
+font-weight: bold;
+margin-bottom: 0.5rem;
+}
+
+.threat-info {
+color: #c9d1d9;
+font-size: 0.95rem;
+margin-bottom: 0.75rem;
+padding: 0.5rem;
+background: #161b22;
+border-left: 3px solid #f85149;
+border-radius: 4px;
+}
+
+.info-row {
+margin: 0.3rem 0;
+}
+
+.alert-description {
+color: #c9d1d9;
+font-size: 0.85rem;
+line-height: 1.5;
+margin-top: 0.75rem;
+margin-bottom: 0.75rem;
+padding: 0.5rem;
+background: #161b22;
+border-left: 3px solid #8b949e;
+border-radius: 4px;
+}
+
+.alert-description strong {
+color: #c9d1d9;
+display: block;
+margin-bottom: 0.3rem;
+}
+
+.copy-icon {
+cursor: pointer;
+color: #8b949e;
+margin-left: 0.3rem;
+padding: 0.2rem 0.3rem;
+border-radius: 3px;
+transition: all 0.2s;
+display: inline-flex;
+align-items: center;
+vertical-align: middle;
+width: 24px;
+height: 24px;
+}
+
+.copy-icon:hover {
+color: #58a6ff;
+background: #1c2128;
+}
+
+.copy-icon:active {
+color: #56d364;
+}
+
+.hash-copy {
+margin-left: 0.5rem;
+margin-right: 0;
+}
+
+.info-icon {
+cursor: pointer;
+color: #8b949e;
+margin-left: 0.5rem;
+padding: 0.2rem;
+border-radius: 3px;
+transition: all 0.2s;
+display: inline-flex;
+align-items: center;
+vertical-align: middle;
+width: 24px;
+height: 24px;
+}
+
+.info-icon:hover {
+color: #58a6ff;
+background: #1c2128;
+}
+
+.mitre-section {
+margin-top: 0.75rem;
+margin-bottom: 0.75rem;
+padding: 0.5rem;
+background: #161b22;
+border-left: 3px solid #56d364;
+border-radius: 4px;
+}
+
+.mitre-section strong {
+color: #56d364;
+font-size: 0.9rem;
+display: block;
+margin-bottom: 0.4rem;
+}
+
+.mitre-technique {
+display: inline-block;
+margin: 0.2rem 0.3rem 0.2rem 0;
+padding: 0.3rem 0.5rem;
+background: #1c2128;
+border: 1px solid #30363d;
+border-radius: 4px;
+font-size: 0.75rem;
+}
+
+.mitre-technique-id {
+color: #56d364;
+font-weight: bold;
+margin-right: 0.3rem;
+}
+
+.mitre-technique-desc {
+color: #8b949e;
+}
+
+.severity-high,
+.severity-critical {
+color: #f85149;
+font-weight: bold;
+}
+
+.severity-medium {
+color: #f0883e;
+font-weight: bold;
+}
+
+.severity-low,
+.severity-informational {
+color: #58a6ff;
+font-weight: bold;
+}
+
+.stats-section {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+gap: 0.75rem;
+margin-bottom: 1.5rem;
+}
+
+.stat-card {
+background: #161b22;
+border: 1px solid #30363d;
+border-radius: 6px;
+padding: 0.75rem;
+text-align: left;
+transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.stat-card:hover {
+transform: translateY(-2px);
+box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.stat-title {
+font-size: 0.85rem;
+font-weight: bold;
+color: #58a6ff;
+text-transform: uppercase;
+letter-spacing: 0.5px;
+margin-bottom: 0.5rem;
+border-bottom: 1px solid #30363d;
+padding-bottom: 0.3rem;
+}
+
+.stat-detail {
+font-size: 0.75rem;
+color: #8b949e;
+margin: 0.25rem 0;
+display: flex;
+justify-content: space-between;
+align-items: center;
+}
+
+.stat-value {
+font-size: 1rem;
+font-weight: bold;
+color: #c9d1d9;
+}
+
+.stat-malicious {
+font-size: 1rem;
+font-weight: bold;
+color: #f85149;
+}
+
+.process.evidence-node {
+border-left-width: 4px;
+}
+
+.process.evidence-node.file {
+border-left-color: #f85149;
+}
+
+.process.evidence-node.url {
+border-left-color: #d29922;
+}
+
+.process.evidence-node.machine {
+border-left-color: #56d364;
+}
+
+.entity-badge {
+display: inline-block;
+background: transparent;
+color: #56d364;
+border: 1px solid #56d364;
+padding: 0.15rem 0.4rem;
+border-radius: 12px;
+font-size: 0.6rem;
+font-weight: bold;
+margin-right: 0.4rem;
+}
+
+.evidence-role {
+display: inline-block;
+background: transparent;
+color: #58a6ff;
+border: 1px solid #58a6ff;
+padding: 0.15rem 0.4rem;
+border-radius: 12px;
+font-size: 0.6rem;
+margin-right: 0.4rem;
+}
+
+.evidence-role.impacted {
+color: #f85149;
+border-color: #f85149;
+}
+
+.evidence-role.related {
+color: #8b949e;
+border-color: #8b949e;
+}
+
+.badge {
+display: inline-block;
+background: transparent;
+padding: 0.15rem 0.4rem;
+border-radius: 12px;
+border: 1px solid;
+font-size: 0.6rem;
+font-weight: bold;
+margin-right: 0.4rem;
+}
+
+.badge-prevented {
+color: #56d364;
+border-color: #56d364;
+}
+
+.badge-malicious {
+color: #f85149;
+border-color: #f85149;
+}
+
+.badge-detected {
+color: #f0883e;
+border-color: #f0883e;
+}
+
+.badge-ioc {
+color: #d2a8ff;
+border-color: #d2a8ff;
+}
+
+.threat-family {
+background: #da3633;
+color: #ffffff;
+padding: 0.1rem 0.4rem;
+border-radius: 3px;
+font-size: 0.75rem;
+font-weight: bold;
+}
+
+.threat-family-badge {
+display: inline-block;
+background: transparent;
+color: #ff8c00;
+border: 1px solid #ff8c00;
+padding: 0.15rem 0.4rem;
+border-radius: 12px;
+font-size: 0.6rem;
+font-weight: bold;
+margin-left: 0.25rem;
+text-transform: uppercase;
+letter-spacing: 0.5px;
+}
+
+.modal {
+display: none;
+position: fixed;
+z-index: 1000;
+left: 0;
+top: 0;
+width: 100%;
+height: 100%;
+overflow: auto;
+background-color: rgba(0,0,0,0.8);
+}
+
+.modal-content {
+background-color: #161b22;
+margin: 5% auto;
+padding: 2rem;
+border: 1px solid #30363d;
+border-radius: 6px;
+width: 80%;
+max-width: 900px;
+color: #c9d1d9;
+max-height: 80vh;
+overflow-y: auto;
+}
+
+.modal-content h3 {
+color: #58a6ff;
+margin-bottom: 1rem;
+}
+
+.modal-close {
+color: #8b949e;
+float: right;
+font-size: 2rem;
+font-weight: bold;
+cursor: pointer;
+line-height: 1;
+}
+
+.modal-close:hover {
+color: #c9d1d9;
+}
+
+.json-display {
+background: #0d1117;
+border: 1px solid #30363d;
+border-radius: 4px;
+padding: 1rem;
+font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+font-size: 0.8rem;
+overflow-x: auto;
+white-space: pre-wrap;
+word-wrap: break-word;
+color: #7ee787;
+}
+
+.tree {
+margin-top: 1.5rem;
+}
+
+.tree-header {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 1rem;
+}
+
+.toggle-all-btn {
+background: #238636;
+color: #ffffff;
+border: none;
+padding: 0.5rem 1rem;
+border-radius: 6px;
+font-size: 0.85rem;
+font-weight: bold;
+cursor: pointer;
+transition: background 0.2s;
+}
+
+.toggle-all-btn:hover {
+background: #2ea043;
+}
+
+.toggle-all-btn:active {
+transform: translateY(1px);
+}
+
+.tree ul {
+list-style: none;
+padding-left: 2rem;
+position: relative;
+}
+
+.tree ul::before {
+content: '';
+position: absolute;
+left: 0.5rem;
+top: 0;
+bottom: 0;
+width: 2px;
+background: #30363d;
+}
+
+.tree li {
+position: relative;
+padding: 0.3rem 0 0.3rem 1rem;
+}
+
+.tree li::before {
+content: '';
+position: absolute;
+left: -1.5rem;
+top: 1.2rem;
+width: 2rem;
+height: 2px;
+background: #30363d;
+}
+
+.tree li::after {
+content: '';
+position: absolute;
+left: -1.5rem;
+top: 0;
+bottom: 50%;
+width: 2px;
+background: #30363d;
+}
+
+.tree > ul::before {
+display: none;
+}
+
+.tree > ul > li::before,
+.tree > ul > li::after {
+display: none;
+}
+
+.collapsible-checkbox {
+display: none;
+}
+
+.process-wrapper {
+display: inline-block;
+}
+
+.process {
+background: #161b22;
+border: 1px solid #30363d;
+border-left: 3px solid #58a6ff;
+padding: 0.5rem 0.7rem;
+border-radius: 4px;
+display: inline-flex;
+align-items: center;
+gap: 0.5rem;
+cursor: pointer;
+transition: background 0.2s;
+font-size: 0.9rem;
+}
+
+.process:hover {
+background: #1c2128;
+}
+
+.process.browser {
+border-left-color: #f0883e;
+}
+
+.process.system {
+border-left-color: #56d364;
+}
+
+.expand-indicator {
+color: #8b949e;
+font-size: 0.8rem;
+margin-right: 0.3rem;
+}
+
+.collapsible-checkbox:checked ~ .process-wrapper .expand-indicator::before {
+content: '▼';
+}
+
+.collapsible-checkbox ~ .process-wrapper .expand-indicator::before {
+content: '▶';
+}
+
+.process-name {
+color: #58a6ff;
+font-weight: bold;
+}
+
+.process.browser .process-name {
+color: #f0883e;
+}
+
+.process.system .process-name {
+color: #56d364;
+}
+
+.process-pid {
+color: #8b949e;
+background: transparent;
+border: 1px solid #8b949e;
+padding: 0.15rem 0.4rem;
+border-radius: 12px;
+font-size: 0.6rem;
+font-weight: bold;
+margin-right: 0.5rem;
+}
+
+.process-pid::before {
+content: 'PID: ';
+}
+
+.process-timestamp {
+color: #6e7681;
+font-size: 0.7rem;
+font-style: italic;
+margin-right: 0.5rem;
+}
+
+.collapsible-details {
+max-height: 0;
+overflow: hidden;
+transition: max-height 0.3s ease-out;
+}
+
+.collapsible-checkbox:checked ~ .collapsible-details {
+max-height: 5000px;
+}
+
+.process-details {
+background: #0d1117;
+border: 1px solid #30363d;
+border-radius: 4px;
+padding: 0.5rem;
+margin: 0.3rem 0 0.3rem 1.5rem;
+font-size: 0.8rem;
+max-width: 800px;
+}
+
+.detail-row {
+color: #8b949e;
+margin: 0.2rem 0;
+}
+
+.detail-row strong {
+color: #c9d1d9;
+min-width: 80px;
+display: inline-block;
+}
+
+.detail-row.command {
+color: #7ee787;
+word-break: break-all;
+margin-top: 0.3rem;
+}
+
+.detail-row.sha {
+color: #6e7681;
+font-size: 0.7rem;
+font-family: monospace;
+word-break: break-all;
+}
+
+.file-creation {
+background: #2d1b1b;
+border: 1px solid #5a1f1f;
+border-left: 3px solid #f85149;
+padding: 0.5rem 0.7rem;
+border-radius: 4px;
+margin: 0.3rem 0 0.3rem 1.5rem;
+max-width: 600px;
+font-size: 0.85rem;
+}
+
+.file-name {
+color: #f85149;
+font-weight: bold;
+}
+
+.file-name::before {
+content: '📁 ';
+}
+
+.file-detail {
+color: #8b949e;
+font-size: 0.75rem;
+margin: 0.2rem 0;
+}
+
+.legend {
+margin-top: 2rem;
+padding: 1rem;
+background: #161b22;
+border: 1px solid #30363d;
+border-radius: 6px;
+}
+
+.legend h2 {
+color: #58a6ff;
+font-size: 1rem;
+margin-bottom: 0.5rem;
+}
+
+.legend-item {
+display: inline-block;
+margin-right: 2rem;
+margin-bottom: 0.5rem;
+font-size: 0.85rem;
+}
+
+.legend-color {
+display: inline-block;
+width: 16px;
+height: 3px;
+margin-right: 0.5rem;
+vertical-align: middle;
+}
+
+.legend-color.system {
+background: #56d364;
+}
+
+.legend-color.browser {
+background: #f0883e;
+}
+
+.legend-color.file {
+background: #f85149;
+}
+
+.legend-color.machine {
+background: #56d364;
+}
+
+.legend-color.url {
+background: #d29922;
+}
+
+.legend-note {
+color: #8b949e;
+font-size: 0.8rem;
+margin-top: 0.5rem;
+}
+
+@media print {
+.modal {
+display: none !important;
+}
+}
+</style>
+</head>
+<body>
+
+<script>
+// Unicode icons
+const COPY_ICON = '⿻';
+const CHECK_ICON = '✓';
+
+function showModal(modalId) {
+document.getElementById(modalId).style.display = 'block';
+}
+
+function closeModal(modalId) {
+document.getElementById(modalId).style.display = 'none';
+}
+
+window.onclick = function(event) {
+if (event.target.className === 'modal') {
+event.target.style.display = 'none';
+}
+}
+
+// Keyboard support
+document.addEventListener('keydown', function(event) {
+if (event.key === 'Escape') {
+document.querySelectorAll('.modal').forEach(modal => {
+modal.style.display = 'none';
+});
+}
+});
+
+// Toggle all details in the tree
+let allExpanded = false;
+function toggleAllDetails() {
+const checkboxes = document.querySelectorAll('.collapsible-checkbox');
+const btn = document.getElementById('toggleAllBtn');
+
+allExpanded = !allExpanded;
+
+checkboxes.forEach(checkbox => {
+checkbox.checked = allExpanded;
+});
+
+btn.textContent = allExpanded ? 'Collapse All' : 'Expand All';
+btn.style.background = allExpanded ? '#da3633' : '#238636';
+}
+
+// Copy Alert ID to clipboard
+function copyAlertId(alertId, event) {
+navigator.clipboard.writeText(alertId).then(function() {
+// Show feedback by temporarily changing the icon
+const iconElement = event.currentTarget;
+const originalColor = iconElement.style.color;
+iconElement.style.color = '#56d364';
+// Temporarily replace with check icon
+iconElement.textContent = CHECK_ICON;
+setTimeout(function() {
+iconElement.style.color = originalColor;
+iconElement.textContent = COPY_ICON;
+}, 1000);
+}).catch(function(err) {
+console.error('Failed to copy: ', err);
+});
+}
+
+// Copy hash value to clipboard
+function copyHash(hashValue, event) {
+navigator.clipboard.writeText(hashValue).then(function() {
+// Show feedback by temporarily changing the icon
+const iconElement = event.currentTarget;
+const originalColor = iconElement.style.color;
+iconElement.style.color = '#56d364';
+// Temporarily replace with check icon
+iconElement.textContent = CHECK_ICON;
+setTimeout(function() {
+iconElement.style.color = originalColor;
+iconElement.textContent = COPY_ICON;
+}, 1000);
+}).catch(function(err) {
+console.error('Failed to copy: ', err);
+});
+}
+
+</script>
+
+<div class="container">
+<div class="alert-title">&#x27;Wacatac&#x27; malware was prevented</div>
+<div class="threat-info">
+<strong>Threat:</strong> Trojan:Win32/Wacatac.H!ml | <strong>Family:</strong> <span class="threat-family">Wacatac</span></div>
+<div class="header-info">
+<div class="info-row"><strong>Device:</strong> desktop-u52hjmc | <strong>User:</strong> DESKTOP-U52HJMC\Defender-Gorgonas | <strong>Alert ID:</strong> da0a72e68d-6927-4d79-9199-24d714801452_1<span class="copy-icon" onclick="copyAlertId('da0a72e68d-6927-4d79-9199-24d714801452_1', event)" title="Copy Alert ID">⿻</span> | <strong>Incident ID:</strong> 9691</div>
+<div class="info-row"><strong>Severity:</strong> <span class="severity-informational">Informational</span> | <strong>Status:</strong> Resolved | <strong>Category:</strong> Malware | <strong>Investigation:</strong> Benign</div>
+<div class="info-row"><strong>Detection Source:</strong> WindowsDefenderAv</div>
+</div>
+<div class="alert-description">
+<strong>Description:</strong>
+Malware and unwanted software are undesirable applications that perform annoying, disruptive, or harmful actions on affected machines. Some of these undesirable applications can replicate and spread from one machine to another. Others are able to receive commands from remote attackers and perform activities associated with cyber attacks.
+
+This detection might indicate that the malware was stopped from delivering its payload. However, it is prudent to check the machine for signs of infection.
+</div>
+<div class="mitre-section">
+<strong>MITRE ATT&CK Techniques:</strong>
+<div class="mitre-technique">
+<span class="mitre-technique-id">T1204.001</span>
+<span class="mitre-technique-desc">User Execution: Malicious File - User opens a malicious file</span>
+</div>
+</div>
+<div class="stats-section">
+<div class="stat-card">
+<div class="stat-title">Files</div>
+<div class="stat-detail">Total: <span class="stat-value">5</span></div>
+<div class="stat-detail">Malicious: <span class="stat-malicious">5</span></div>
+</div>
+<div class="stat-card">
+<div class="stat-title">Processes</div>
+<div class="stat-detail">Total: <span class="stat-value">4</span></div>
+<div class="stat-detail">Malicious: <span class="stat-malicious">0</span></div>
+</div>
+<div class="stat-card">
+<div class="stat-title">URLs</div>
+<div class="stat-detail">Total: <span class="stat-value">2</span></div>
+<div class="stat-detail">Malicious: <span class="stat-malicious">2</span></div>
+</div>
+</div>
+<div class="tree">
+<div class="tree-header">
+<h2>Process Tree & Evidence</h2>
+<button id="toggleAllBtn" class="toggle-all-btn" onclick="toggleAllDetails()">Expand All</button>
+</div>
+<ul>
+<li>
+<input type="checkbox" id="process1" class="collapsible-checkbox">
+<label for="process1" class="process-wrapper">
+<div class="process system">
+<span class="expand-indicator"></span>
+<span class="process-name">userinit.exe</span>
+<span class="process-pid">2824</span>
+<span class="process-timestamp">2026-01-07 10:30:03</span>
+</div>
+</label>
+<div class="collapsible-details">
+<div class="process-details">
+<div class="detail-row"><strong>Account:</strong> defender-gorgonas</div>
+<div class="detail-row"><strong>Timestamp:</strong> 2026-01-07 10:30:03</div>
+<div class="detail-row"><strong>Integrity:</strong> Medium</div>
+<div class="detail-row command"><strong>Command:</strong> userinit.exe</div>
+<div class="detail-row sha"><strong>SHA256:</strong> 0043369966e39c40b96c941ebe06ba53139dc314785f0d2d5d490def51dfb86c <span class="copy-icon hash-copy" onclick="copyHash('0043369966e39c40b96c941ebe06ba53139dc314785f0d2d5d490def51dfb86c', event)" title="Copy SHA256">⿻</span></div>
+<div class="detail-row"><strong>Parent:</strong> smss.exe</div>
+</div>
+</div>
+<ul>
+<li>
+<input type="checkbox" id="process2" class="collapsible-checkbox">
+<label for="process2" class="process-wrapper">
+<div class="process system">
+<span class="expand-indicator"></span>
+<span class="process-name">explorer.exe</span>
+<span class="process-pid">3220</span>
+<span class="process-timestamp">2026-01-07 10:30:04</span>
+</div>
+</label>
+<div class="collapsible-details">
+<div class="process-details">
+<div class="detail-row"><strong>Account:</strong> defender-gorgonas</div>
+<div class="detail-row"><strong>Timestamp:</strong> 2026-01-07 10:30:04</div>
+<div class="detail-row"><strong>Integrity:</strong> Medium</div>
+<div class="detail-row command"><strong>Command:</strong> Explorer.EXE</div>
+<div class="detail-row sha"><strong>SHA256:</strong> 988a56d897915315eef9ca679b3bc8adfcecf5e227aea99aaa1817620520e97e <span class="copy-icon hash-copy" onclick="copyHash('988a56d897915315eef9ca679b3bc8adfcecf5e227aea99aaa1817620520e97e', event)" title="Copy SHA256">⿻</span></div>
+<div class="detail-row"><strong>Parent:</strong> winlogon.exe</div>
+</div>
+</div>
+<ul>
+<li>
+<input type="checkbox" id="process3" class="collapsible-checkbox">
+<label for="process3" class="process-wrapper">
+<div class="process browser">
+<span class="expand-indicator"></span>
+<span class="process-name">epic.exe</span>
+<span class="process-pid">9852</span>
+<span class="process-timestamp">2026-01-07 10:30:39</span>
+</div>
+</label>
+<div class="collapsible-details">
+<div class="process-details">
+<div class="detail-row"><strong>Account:</strong> defender-gorgonas</div>
+<div class="detail-row"><strong>Timestamp:</strong> 2026-01-07 10:30:39</div>
+<div class="detail-row"><strong>Integrity:</strong> Medium</div>
+<div class="detail-row command"><strong>Command:</strong> &quot;epic.exe&quot; --profile-directory=Default --restore-last-session --restart</div>
+<div class="detail-row sha"><strong>SHA256:</strong> 9015a147bb6871bef27cd69389c2e6d11ef6026df766d784f86f6932c0e61571 <span class="copy-icon hash-copy" onclick="copyHash('9015a147bb6871bef27cd69389c2e6d11ef6026df766d784f86f6932c0e61571', event)" title="Copy SHA256">⿻</span></div>
+<div class="detail-row"><strong>Parent:</strong> userinit.exe</div>
+</div>
+</div>
+<ul>
+<li>
+<input type="checkbox" id="process4" class="collapsible-checkbox">
+<label for="process4" class="process-wrapper">
+<div class="process browser">
+<span class="expand-indicator"></span>
+<span class="process-name">epic.exe</span>
+<span class="process-pid">10596</span>
+<span class="process-timestamp">2026-01-07 10:30:48</span>
+</div>
+</label>
+<div class="collapsible-details">
+<div class="process-details">
+<div class="detail-row"><strong>Account:</strong> defender-gorgonas</div>
+<div class="detail-row"><strong>Timestamp:</strong> 2026-01-07 10:30:48</div>
+<div class="detail-row"><strong>Integrity:</strong> Medium</div>
+<div class="detail-row command"><strong>Command:</strong> &quot;epic.exe&quot; --profile-directory=Default --restore-last-session --restart --flag-switches-begin --flag-switches-end</div>
+<div class="detail-row sha"><strong>SHA256:</strong> 9015a147bb6871bef27cd69389c2e6d11ef6026df766d784f86f6932c0e61571 <span class="copy-icon hash-copy" onclick="copyHash('9015a147bb6871bef27cd69389c2e6d11ef6026df766d784f86f6932c0e61571', event)" title="Copy SHA256">⿻</span></div>
+<div class="detail-row"><strong>Parent:</strong> explorer.exe</div>
+</div>
+</div>
+</li>
+<li>
+<input type="checkbox" id="evidence20300" class="collapsible-checkbox">
+<label for="evidence20300" class="process-wrapper">
+<div class="process evidence-node machine">
+<span class="expand-indicator"></span>
+<span class="process-name">desktop-u52hjmc</span>
+<span class="process-timestamp">2026-01-14 17:00:15</span>
+<span class="entity-badge">Machine</span>
+<span class="evidence-role impacted">Impacted</span>
+<span class="badge badge-detected">Detected</span>
+<span class="info-icon" onclick="showModal('modal20300')" title="View Additional Fields">📋</span>
+<div id="modal20300" class="modal">
+<div class="modal-content">
+<span class="modal-close" onclick="closeModal('modal20300')">&times;</span>
+<h3>Additional Fields</h3>
+<pre class="json-display">{&quot;HostName&quot;: &quot;desktop-u52hjmc&quot;, &quot;NetBiosName&quot;: &quot;desktop-u52hjmc&quot;, &quot;OSFamily&quot;: &quot;Windows&quot;, &quot;OSVersion&quot;: &quot;10.0&quot;, &quot;IsDomainJoined&quot;: false, &quot;IpInterfaces&quot;: [{&quot;$id&quot;: &quot;2&quot;, &quot;Address&quot;: &quot;172.20.22.108&quot;, &quot;Type&quot;: &quot;ip&quot;}, {&quot;$id&quot;: &quot;3&quot;, &quot;Address&quot;: &quot;fe80::b336:58f2:88cf:e3a5&quot;, &quot;Type&quot;: &quot;ip&quot;}, {&quot;$id&quot;: &quot;4&quot;, &quot;Address&quot;: &quot;127.0.0.1&quot;, &quot;Type&quot;: &quot;ip&quot;}, {&quot;$id&quot;: &quot;5&quot;, &quot;Address&quot;: &quot;::1&quot;, &quot;Type&quot;: &quot;ip&quot;}], &quot;RemediationProviders&quot;: [{&quot;RemediationState&quot;: &quot;Active&quot;, &quot;RemediationDate&quot;: &quot;2026-01-14T17:01:03.174436Z&quot;, &quot;Type&quot;: &quot;remediation-provider&quot;}], &quot;LastRemediationState&quot;: &quot;Active&quot;, &quot;ThreatAnalysisSummary&quot;: [{&quot;AnalyzersResult&quot;: [], &quot;Verdict&quot;: &quot;Suspicious&quot;, &quot;AnalysisDate&quot;: &quot;2026-01-14T17:01:03.174436Z&quot;}], &quot;LastVerdict&quot;: &quot;Suspicious&quot;, &quot;Asset&quot;: true, &quot;DetailedRoles&quot;: [&quot;PrimaryDevice&quot;], &quot;RbacScopes&quot;: {&quot;ScopesPerType&quot;: {&quot;MachineGroupIds&quot;: {&quot;Mode&quot;: &quot;Any&quot;, &quot;Scopes&quot;: [&quot;318&quot;]}, &quot;Workloads&quot;: {&quot;Mode&quot;: &quot;All&quot;, &quot;Scopes&quot;: [&quot;Mdatp&quot;]}}}, &quot;Type&quot;: &quot;host&quot;, &quot;LeadingHost&quot;: true, &quot;Role&quot;: 0, &quot;MachineId&quot;: &quot;29dc029e30d0be0c7f2d0a3b53b222d068bc50b5&quot;, &quot;MachineIdType&quot;: 3, &quot;HostMachineId&quot;: null, &quot;DetectionStatus&quot;: &quot;Detected&quot;, &quot;SuspicionLevel&quot;: &quot;Suspicious&quot;, &quot;EnrichmentType&quot;: &quot;MachineIpInterfacesEnrichment&quot;, &quot;IsIoc&quot;: false, &quot;MergeByKey&quot;: &quot;PuuQHHLwS+8/npR8IvNLevUkuaM=&quot;, &quot;MergeByKeyHex&quot;: &quot;3EEB901C72F04BEF3F9E947C22F34B7AF524B9A3&quot;}</pre>
+</div>
+</div></div>
+</label>
+<div class="collapsible-details">
+<div class="process-details">
+<div class="detail-row"><strong>Alert:</strong> &#x27;Wacatac&#x27; malware was detected</div>
+<div class="detail-row"><strong>Device ID:</strong> 29dc029e30d0be0c7f2d0a3b53b222d0...</div>
+<div class="detail-row"><strong>Timestamp:</strong> 2026-01-14 17:00:15</div>
+</div>
+</div>
+</li>
+<li>
+<input type="checkbox" id="evidence20301" class="collapsible-checkbox">
+<label for="evidence20301" class="process-wrapper">
+<div class="process evidence-node file">
+<span class="expand-indicator"></span>
+<span class="process-name">Benzoate.exe</span>
+<span class="process-timestamp">2026-01-14 17:00:15</span>
+<span class="entity-badge">File</span>
+<span class="evidence-role related">Related</span>
+<span class="badge badge-malicious">Malicious</span>
+<span class="badge badge-ioc">IOC</span>
+<span class="threat-family-badge">Wacatac</span>
+<span class="info-icon" onclick="showModal('modal20301')" title="View Additional Fields">📋</span>
+<div id="modal20301" class="modal">
+<div class="modal-content">
+<span class="modal-close" onclick="closeModal('modal20301')">&times;</span>
+<h3>Additional Fields</h3>
+<pre class="json-display">{&quot;Directory&quot;: &quot;C:\\Users\\Defender-Gorgonas\\Downloads&quot;, &quot;Name&quot;: &quot;Benzoate.exe&quot;, &quot;Host&quot;: {&quot;$id&quot;: &quot;2&quot;, &quot;HostName&quot;: &quot;desktop-u52hjmc&quot;, &quot;NetBiosName&quot;: &quot;desktop-u52hjmc&quot;, &quot;OSFamily&quot;: &quot;Windows&quot;, &quot;OSVersion&quot;: &quot;10.0&quot;, &quot;IsDomainJoined&quot;: false, &quot;IpInterfaces&quot;: [{&quot;$id&quot;: &quot;3&quot;, &quot;Address&quot;: &quot;172.20.22.108&quot;, &quot;Type&quot;: &quot;ip&quot;}, {&quot;$id&quot;: &quot;4&quot;, &quot;Address&quot;: &quot;fe80::b336:58f2:88cf:e3a5&quot;, &quot;Type&quot;: &quot;ip&quot;}, {&quot;$id&quot;: &quot;5&quot;, &quot;Address&quot;: &quot;127.0.0.1&quot;, &quot;Type&quot;: &quot;ip&quot;}, {&quot;$id&quot;: &quot;6&quot;, &quot;Address&quot;: &quot;::1&quot;, &quot;Type&quot;: &quot;ip&quot;}], &quot;RemediationProviders&quot;: [{&quot;RemediationState&quot;: &quot;Active&quot;, &quot;RemediationDate&quot;: &quot;2026-01-14T17:01:03.174436Z&quot;, &quot;Type&quot;: &quot;remediation-provider&quot;}], &quot;LastRemediationState&quot;: &quot;Active&quot;, &quot;ThreatAnalysisSummary&quot;: [{&quot;AnalyzersResult&quot;: [], &quot;Verdict&quot;: &quot;Suspicious&quot;, &quot;AnalysisDate&quot;: &quot;2026-01-14T17:01:03.174436Z&quot;}], &quot;LastVerdict&quot;: &quot;Suspicious&quot;, &quot;Asset&quot;: true, &quot;DetailedRoles&quot;: [&quot;PrimaryDevice&quot;], &quot;RbacScopes&quot;: {&quot;ScopesPerType&quot;: {&quot;MachineGroupIds&quot;: {&quot;Mode&quot;: &quot;Any&quot;, &quot;Scopes&quot;: [&quot;318&quot;]}, &quot;Workloads&quot;: {&quot;Mode&quot;: &quot;All&quot;, &quot;Scopes&quot;: [&quot;Mdatp&quot;]}}}, &quot;Type&quot;: &quot;host&quot;, &quot;LeadingHost&quot;: true, &quot;Role&quot;: 0, &quot;MachineId&quot;: &quot;29dc029e30d0be0c7f2d0a3b53b222d068bc50b5&quot;, &quot;MachineIdType&quot;: 3, &quot;HostMachineId&quot;: null, &quot;DetectionStatus&quot;: &quot;Detected&quot;, &quot;SuspicionLevel&quot;: &quot;Suspicious&quot;, &quot;EnrichmentType&quot;: &quot;MachineIpInterfacesEnrichment&quot;, &quot;IsIoc&quot;: false, &quot;MergeByKey&quot;: &quot;PuuQHHLwS+8/npR8IvNLevUkuaM=&quot;, &quot;MergeByKeyHex&quot;: &quot;3EEB901C72F04BEF3F9E947C22F34B7AF524B9A3&quot;}, &quot;HostUrl&quot;: {&quot;$id&quot;: &quot;7&quot;, &quot;Url&quot;: &quot;https://github.com/&quot;, &quot;Type&quot;: &quot;url&quot;}, &quot;SizeInBytes&quot;: 193024, &quot;FileHashes&quot;: [{&quot;$id&quot;: &quot;8&quot;, &quot;Algorithm&quot;: &quot;SHA1&quot;, &quot;Value&quot;: &quot;eb688e699c5caf1a64a1dcaab135737d57d86135&quot;, &quot;Type&quot;: &quot;filehash&quot;}, {&quot;$id&quot;: &quot;9&quot;, &quot;Algorithm&quot;: &quot;MD5&quot;, &quot;Value&quot;: &quot;b847bef13f27db4d851bdd14346ce989&quot;, &quot;Type&quot;: &quot;filehash&quot;}, {&quot;$id&quot;: &quot;10&quot;, &quot;Algorithm&quot;: &quot;SHA256&quot;, &quot;Value&quot;: &quot;a5516705158cbd94ac4cc1869bed94ac0ff75f9ec42b057db18e8261d2af6b0f&quot;, &quot;Type&quot;: &quot;filehash&quot;}], &quot;RemediationProviders&quot;: [{&quot;RemediationState&quot;: &quot;Active&quot;, &quot;RemediationDate&quot;: &quot;2026-01-14T17:00:15.4241809Z&quot;, &quot;Type&quot;: &quot;remediation-provider&quot;}], &quot;LastRemediationState&quot;: &quot;Active&quot;, &quot;ThreatAnalysisSummary&quot;: [{&quot;AnalyzersResult&quot;: [], &quot;Verdict&quot;: &quot;Malicious&quot;, &quot;AnalysisDate&quot;: &quot;2026-01-14T17:00:15.4241809Z&quot;}], &quot;LastVerdict&quot;: &quot;Malicious&quot;, &quot;RbacScopes&quot;: {&quot;ScopesPerType&quot;: {&quot;MachineGroupIds&quot;: {&quot;Mode&quot;: &quot;Any&quot;, &quot;Scopes&quot;: [&quot;318&quot;]}, &quot;Workloads&quot;: {&quot;Mode&quot;: &quot;All&quot;, &quot;Scopes&quot;: [&quot;Mdatp&quot;]}}}, &quot;Type&quot;: &quot;file&quot;, &quot;LsHash&quot;: &quot;7fd9debe66999d697bf9a57f7ba9f995dea675da5ef57da57fbf7afe6ed56a59e76b6adeefbb9b5da9695a66faaeffb97ddb9ff5ab5f77aeed9b5bf966db97d5&quot;, &quot;IsPe&quot;: true, &quot;ReferenceId&quot;: &quot;1042e3f9-b219-4158-81c8-78c02639bd80:a7cdb3e73726&quot;, &quot;DetectionStatus&quot;: &quot;Detected&quot;, &quot;ThreatFamilyName&quot;: &quot;Wacatac&quot;, &quot;SuspicionLevel&quot;: &quot;Suspicious&quot;, &quot;EnrichmentType&quot;: &quot;FilePrevalenceEnrichment&quot;, &quot;IsIoc&quot;: true, &quot;Role&quot;: 1, &quot;MergeByKey&quot;: &quot;Yf1KiI45tOJOl4KC6pkj8vLwckM=&quot;, &quot;MergeByKeyHex&quot;: &quot;61FD4A888E39B4E24E978282EA9923F2F2F07243&quot;}</pre>
+</div>
+</div></div>
+</label>
+<div class="collapsible-details">
+<div class="process-details">
+<div class="detail-row"><strong>Alert:</strong> &#x27;Wacatac&#x27; malware was detected</div>
+<div class="detail-row"><strong>Path:</strong> C:\Users\Defender-Gorgonas\Downloads</div>
+<div class="detail-row sha"><strong>SHA1:</strong> eb688e699c5caf1a64a1dcaab135737d57d86135 <span class="copy-icon hash-copy" onclick="copyHash('eb688e699c5caf1a64a1dcaab135737d57d86135', event)" title="Copy SHA1">⿻</span></div>
+<div class="detail-row sha"><strong>SHA256:</strong> a5516705158cbd94ac4cc1869bed94ac0ff75f9ec42b057db18e8261d2af6b0f <span class="copy-icon hash-copy" onclick="copyHash('a5516705158cbd94ac4cc1869bed94ac0ff75f9ec42b057db18e8261d2af6b0f', event)" title="Copy SHA256">⿻</span></div>
+<div class="detail-row"><strong>Timestamp:</strong> 2026-01-14 17:00:15</div>
+</div>
+</div>
+</li>
+<li>
+<input type="checkbox" id="evidence20302" class="collapsible-checkbox">
+<label for="evidence20302" class="process-wrapper">
+<div class="process evidence-node url">
+<span class="expand-indicator"></span>
+<span class="process-name">https://github.com/</span>
+<span class="process-timestamp">2026-01-14 17:00:15</span>
+<span class="entity-badge">Url</span>
+<span class="evidence-role related">Related</span>
+<span class="badge badge-malicious">Malicious</span>
+<span class="badge badge-ioc">IOC</span>
+<span class="info-icon" onclick="showModal('modal20302')" title="View Additional Fields">📋</span>
+<div id="modal20302" class="modal">
+<div class="modal-content">
+<span class="modal-close" onclick="closeModal('modal20302')">&times;</span>
+<h3>Additional Fields</h3>
+<pre class="json-display">{&quot;Url&quot;: &quot;https://github.com/&quot;, &quot;RemediationProviders&quot;: [{&quot;RemediationState&quot;: &quot;Active&quot;, &quot;RemediationDate&quot;: &quot;2026-01-14T17:00:15.4241809Z&quot;, &quot;Type&quot;: &quot;remediation-provider&quot;}], &quot;LastRemediationState&quot;: &quot;Active&quot;, &quot;ThreatAnalysisSummary&quot;: [{&quot;AnalyzersResult&quot;: [], &quot;Verdict&quot;: &quot;Malicious&quot;, &quot;AnalysisDate&quot;: &quot;2026-01-14T17:00:15.4241809Z&quot;}], &quot;LastVerdict&quot;: &quot;Malicious&quot;, &quot;RbacScopes&quot;: {&quot;ScopesPerType&quot;: {&quot;MachineGroupIds&quot;: {&quot;Mode&quot;: &quot;Any&quot;, &quot;Scopes&quot;: [&quot;318&quot;]}, &quot;Workloads&quot;: {&quot;Mode&quot;: &quot;All&quot;, &quot;Scopes&quot;: [&quot;Mdatp&quot;]}}}, &quot;Type&quot;: &quot;url&quot;, &quot;ReferenceId&quot;: &quot;1042e3f9-b219-4158-81c8-78c02639bd80:24a2c8474ddb&quot;, &quot;ObservedByDevice&quot;: {&quot;HostName&quot;: &quot;desktop-u52hjmc&quot;, &quot;NetBiosName&quot;: &quot;desktop-u52hjmc&quot;, &quot;OSFamily&quot;: &quot;Windows&quot;, &quot;OSVersion&quot;: &quot;10.0&quot;, &quot;IsDomainJoined&quot;: false, &quot;Asset&quot;: true, &quot;DetailedRoles&quot;: [&quot;PrimaryDevice&quot;], &quot;RbacScopes&quot;: {&quot;ScopesPerType&quot;: {&quot;MachineGroupIds&quot;: {&quot;Mode&quot;: &quot;Any&quot;, &quot;Scopes&quot;: [&quot;318&quot;]}, &quot;Workloads&quot;: {&quot;Mode&quot;: &quot;All&quot;, &quot;Scopes&quot;: [&quot;Mdatp&quot;]}}}, &quot;Type&quot;: &quot;host&quot;, &quot;LeadingHost&quot;: true, &quot;Role&quot;: 0, &quot;MachineId&quot;: &quot;29dc029e30d0be0c7f2d0a3b53b222d068bc50b5&quot;, &quot;MachineIdType&quot;: 3, &quot;HostMachineId&quot;: null}, &quot;DetectionStatus&quot;: &quot;Detected&quot;, &quot;ThreatFamilyName&quot;: &quot;Wacatac&quot;, &quot;SuspicionLevel&quot;: &quot;Suspicious&quot;, &quot;IsIoc&quot;: true, &quot;Role&quot;: 1, &quot;MergeByKey&quot;: &quot;76lySxx2MYoEs77q7qVqiI1Xn6M=&quot;, &quot;MergeByKeyHex&quot;: &quot;EFA9724B1C76318A04B3BEEAEEA56A888D579FA3&quot;}</pre>
+</div>
+</div></div>
+</label>
+<div class="collapsible-details">
+<div class="process-details">
+<div class="detail-row"><strong>Alert:</strong> &#x27;Wacatac&#x27; malware was detected</div>
+<div class="detail-row"><strong>Full URL:</strong> <a href="https://github.com/" target="_blank">https://github.com/</a></div>
+<div class="detail-row"><strong>Timestamp:</strong> 2026-01-14 17:00:15</div>
+</div>
+</div>
+</li>
+<li>
+<input type="checkbox" id="evidence20303" class="collapsible-checkbox">
+<label for="evidence20303" class="process-wrapper">
+<div class="process evidence-node machine">
+<span class="expand-indicator"></span>
+<span class="process-name">desktop-u52hjmc</span>
+<span class="process-timestamp">2026-01-14 17:00:20</span>
+<span class="entity-badge">Machine</span>
+<span class="evidence-role impacted">Impacted</span>
+<span class="badge badge-detected">Detected</span>
+<span class="info-icon" onclick="showModal('modal20303')" title="View Additional Fields">📋</span>
+<div id="modal20303" class="modal">
+<div class="modal-content">
+<span class="modal-close" onclick="closeModal('modal20303')">&times;</span>
+<h3>Additional Fields</h3>
+<pre class="json-display">{&quot;HostName&quot;: &quot;desktop-u52hjmc&quot;, &quot;NetBiosName&quot;: &quot;desktop-u52hjmc&quot;, &quot;OSFamily&quot;: &quot;Windows&quot;, &quot;OSVersion&quot;: &quot;10.0&quot;, &quot;IsDomainJoined&quot;: false, &quot;IpInterfaces&quot;: [{&quot;$id&quot;: &quot;2&quot;, &quot;Address&quot;: &quot;172.20.22.108&quot;, &quot;Type&quot;: &quot;ip&quot;}, {&quot;$id&quot;: &quot;3&quot;, &quot;Address&quot;: &quot;fe80::b336:58f2:88cf:e3a5&quot;, &quot;Type&quot;: &quot;ip&quot;}, {&quot;$id&quot;: &quot;4&quot;, &quot;Address&quot;: &quot;127.0.0.1&quot;, &quot;Type&quot;: &quot;ip&quot;}, {&quot;$id&quot;: &quot;5&quot;, &quot;Address&quot;: &quot;::1&quot;, &quot;Type&quot;: &quot;ip&quot;}], &quot;RemediationProviders&quot;: [{&quot;RemediationState&quot;: &quot;Active&quot;, &quot;RemediationDate&quot;: &quot;2026-01-14T17:01:26.2973404Z&quot;, &quot;Type&quot;: &quot;remediation-provider&quot;}], &quot;LastRemediationState&quot;: &quot;Active&quot;, &quot;ThreatAnalysisSummary&quot;: [{&quot;AnalyzersResult&quot;: [], &quot;Verdict&quot;: &quot;Suspicious&quot;, &quot;AnalysisDate&quot;: &quot;2026-01-14T17:01:26.2973404Z&quot;}], &quot;LastVerdict&quot;: &quot;Suspicious&quot;, &quot;Asset&quot;: true, &quot;DetailedRoles&quot;: [&quot;PrimaryDevice&quot;], &quot;RbacScopes&quot;: {&quot;ScopesPerType&quot;: {&quot;MachineGroupIds&quot;: {&quot;Mode&quot;: &quot;Any&quot;, &quot;Scopes&quot;: [&quot;318&quot;]}, &quot;Workloads&quot;: {&quot;Mode&quot;: &quot;All&quot;, &quot;Scopes&quot;: [&quot;Mdatp&quot;]}}}, &quot;Type&quot;: &quot;host&quot;, &quot;LeadingHost&quot;: true, &quot;Role&quot;: 0, &quot;MachineId&quot;: &quot;29dc029e30d0be0c7f2d0a3b53b222d068bc50b5&quot;, &quot;MachineIdType&quot;: 3, &quot;HostMachineId&quot;: null, &quot;DetectionStatus&quot;: &quot;Detected&quot;, &quot;SuspicionLevel&quot;: &quot;Suspicious&quot;, &quot;EnrichmentType&quot;: &quot;MachineIpInterfacesEnrichment&quot;, &quot;IsIoc&quot;: false, &quot;MergeByKey&quot;: &quot;PuuQHHLwS+8/npR8IvNLevUkuaM=&quot;, &quot;MergeByKeyHex&quot;: &quot;3EEB901C72F04BEF3F9E947C22F34B7AF524B9A3&quot;}</pre>
+</div>
+</div></div>
+</label>
+<div class="collapsible-details">
+<div class="process-details">
+<div class="detail-row"><strong>Alert:</strong> &#x27;Wacatac&#x27; malware was detected</div>
+<div class="detail-row"><strong>Device ID:</strong> 29dc029e30d0be0c7f2d0a3b53b222d0...</div>
+<div class="detail-row"><strong>Timestamp:</strong> 2026-01-14 17:00:20</div>
+</div>
+</div>
+</li>
+<li>
+<input type="checkbox" id="evidence20304" class="collapsible-checkbox">
+<label for="evidence20304" class="process-wrapper">
+<div class="process evidence-node file">
+<span class="expand-indicator"></span>
+<span class="process-name">53c9fd5b-5bcb-4316-afc7-b81aa9d7805e.tmp</span>
+<span class="process-timestamp">2026-01-14 17:00:20</span>
+<span class="entity-badge">File</span>
+<span class="evidence-role related">Related</span>
+<span class="badge badge-malicious">Malicious</span>
+<span class="badge badge-ioc">IOC</span>
+<span class="threat-family-badge">Wacatac</span>
+<span class="info-icon" onclick="showModal('modal20304')" title="View Additional Fields">📋</span>
+<div id="modal20304" class="modal">
+<div class="modal-content">
+<span class="modal-close" onclick="closeModal('modal20304')">&times;</span>
+<h3>Additional Fields</h3>
+<pre class="json-display">{&quot;Directory&quot;: &quot;C:\\Users\\Defender-Gorgonas\\Downloads&quot;, &quot;Name&quot;: &quot;53c9fd5b-5bcb-4316-afc7-b81aa9d7805e.tmp&quot;, &quot;Host&quot;: {&quot;$id&quot;: &quot;2&quot;, &quot;HostName&quot;: &quot;desktop-u52hjmc&quot;, &quot;NetBiosName&quot;: &quot;desktop-u52hjmc&quot;, &quot;OSFamily&quot;: &quot;Windows&quot;, &quot;OSVersion&quot;: &quot;10.0&quot;, &quot;IsDomainJoined&quot;: false, &quot;IpInterfaces&quot;: [{&quot;$id&quot;: &quot;3&quot;, &quot;Address&quot;: &quot;172.20.22.108&quot;, &quot;Type&quot;: &quot;ip&quot;}, {&quot;$id&quot;: &quot;4&quot;, &quot;Address&quot;: &quot;fe80::b336:58f2:88cf:e3a5&quot;, &quot;Type&quot;: &quot;ip&quot;}, {&quot;$id&quot;: &quot;5&quot;, &quot;Address&quot;: &quot;127.0.0.1&quot;, &quot;Type&quot;: &quot;ip&quot;}, {&quot;$id&quot;: &quot;6&quot;, &quot;Address&quot;: &quot;::1&quot;, &quot;Type&quot;: &quot;ip&quot;}], &quot;RemediationProviders&quot;: [{&quot;RemediationState&quot;: &quot;Active&quot;, &quot;RemediationDate&quot;: &quot;2026-01-14T17:01:26.2973404Z&quot;, &quot;Type&quot;: &quot;remediation-provider&quot;}], &quot;LastRemediationState&quot;: &quot;Active&quot;, &quot;ThreatAnalysisSummary&quot;: [{&quot;AnalyzersResult&quot;: [], &quot;Verdict&quot;: &quot;Suspicious&quot;, &quot;AnalysisDate&quot;: &quot;2026-01-14T17:01:26.2973404Z&quot;}], &quot;LastVerdict&quot;: &quot;Suspicious&quot;, &quot;Asset&quot;: true, &quot;DetailedRoles&quot;: [&quot;PrimaryDevice&quot;], &quot;RbacScopes&quot;: {&quot;ScopesPerType&quot;: {&quot;MachineGroupIds&quot;: {&quot;Mode&quot;: &quot;Any&quot;, &quot;Scopes&quot;: [&quot;318&quot;]}, &quot;Workloads&quot;: {&quot;Mode&quot;: &quot;All&quot;, &quot;Scopes&quot;: [&quot;Mdatp&quot;]}}}, &quot;Type&quot;: &quot;host&quot;, &quot;LeadingHost&quot;: true, &quot;Role&quot;: 0, &quot;MachineId&quot;: &quot;29dc029e30d0be0c7f2d0a3b53b222d068bc50b5&quot;, &quot;MachineIdType&quot;: 3, &quot;HostMachineId&quot;: null, &quot;DetectionStatus&quot;: &quot;Detected&quot;, &quot;SuspicionLevel&quot;: &quot;Suspicious&quot;, &quot;EnrichmentType&quot;: &quot;MachineIpInterfacesEnrichment&quot;, &quot;IsIoc&quot;: false, &quot;MergeByKey&quot;: &quot;PuuQHHLwS+8/npR8IvNLevUkuaM=&quot;, &quot;MergeByKeyHex&quot;: &quot;3EEB901C72F04BEF3F9E947C22F34B7AF524B9A3&quot;}, &quot;SizeInBytes&quot;: 193024, &quot;FileHashes&quot;: [{&quot;$id&quot;: &quot;7&quot;, &quot;Algorithm&quot;: &quot;SHA1&quot;, &quot;Value&quot;: &quot;eb688e699c5caf1a64a1dcaab135737d57d86135&quot;, &quot;Type&quot;: &quot;filehash&quot;}, {&quot;$id&quot;: &quot;8&quot;, &quot;Algorithm&quot;: &quot;SHA256&quot;, &quot;Value&quot;: &quot;a5516705158cbd94ac4cc1869bed94ac0ff75f9ec42b057db18e8261d2af6b0f&quot;, &quot;Type&quot;: &quot;filehash&quot;}], &quot;RemediationProviders&quot;: [{&quot;RemediationState&quot;: &quot;Active&quot;, &quot;RemediationDate&quot;: &quot;2026-01-14T17:00:20.7063597Z&quot;, &quot;Type&quot;: &quot;remediation-provider&quot;}], &quot;LastRemediationState&quot;: &quot;Active&quot;, &quot;ThreatAnalysisSummary&quot;: [{&quot;AnalyzersResult&quot;: [], &quot;Verdict&quot;: &quot;Malicious&quot;, &quot;AnalysisDate&quot;: &quot;2026-01-14T17:00:20.7063597Z&quot;}], &quot;LastVerdict&quot;: &quot;Malicious&quot;, &quot;RbacScopes&quot;: {&quot;ScopesPerType&quot;: {&quot;MachineGroupIds&quot;: {&quot;Mode&quot;: &quot;Any&quot;, &quot;Scopes&quot;: [&quot;318&quot;]}, &quot;Workloads&quot;: {&quot;Mode&quot;: &quot;All&quot;, &quot;Scopes&quot;: [&quot;Mdatp&quot;]}}}, &quot;Type&quot;: &quot;file&quot;, &quot;ReferenceId&quot;: &quot;98387505-123b-4e7a-8c6f-d0efad02f76e:a7cdb3e73726&quot;, &quot;DetectionStatus&quot;: &quot;Detected&quot;, &quot;ThreatFamilyName&quot;: &quot;Wacatac&quot;, &quot;SuspicionLevel&quot;: &quot;Suspicious&quot;, &quot;EnrichmentType&quot;: &quot;FilePrevalenceEnrichment&quot;, &quot;IsIoc&quot;: true, &quot;Role&quot;: 1, &quot;MergeByKey&quot;: &quot;qO5rv5jKmIzF0CJXw09EVG8PLl4=&quot;, &quot;MergeByKeyHex&quot;: &quot;A8EE6BBF98CA988CC5D02257C34F44546F0F2E5E&quot;}</pre>
+</div>
+</div></div>
+</label>
+<div class="collapsible-details">
+<div class="process-details">
+<div class="detail-row"><strong>Alert:</strong> &#x27;Wacatac&#x27; malware was detected</div>
+<div class="detail-row"><strong>Path:</strong> C:\Users\Defender-Gorgonas\Downloads</div>
+<div class="detail-row sha"><strong>SHA1:</strong> eb688e699c5caf1a64a1dcaab135737d57d86135 <span class="copy-icon hash-copy" onclick="copyHash('eb688e699c5caf1a64a1dcaab135737d57d86135', event)" title="Copy SHA1">⿻</span></div>
+<div class="detail-row sha"><strong>SHA256:</strong> a5516705158cbd94ac4cc1869bed94ac0ff75f9ec42b057db18e8261d2af6b0f <span class="copy-icon hash-copy" onclick="copyHash('a5516705158cbd94ac4cc1869bed94ac0ff75f9ec42b057db18e8261d2af6b0f', event)" title="Copy SHA256">⿻</span></div>
+<div class="detail-row"><strong>Timestamp:</strong> 2026-01-14 17:00:20</div>
+</div>
+</div>
+</li>
+<li>
+<input type="checkbox" id="evidence20305" class="collapsible-checkbox">
+<label for="evidence20305" class="process-wrapper">
+<div class="process evidence-node file">
+<span class="expand-indicator"></span>
+<span class="process-name">Benzoate.exe</span>
+<span class="process-timestamp">2026-01-14 17:00:20</span>
+<span class="entity-badge">File</span>
+<span class="evidence-role related">Related</span>
+<span class="badge badge-prevented">Prevented</span>
+<span class="badge badge-ioc">IOC</span>
+<span class="threat-family-badge">Wacatac</span>
+<span class="info-icon" onclick="showModal('modal20305')" title="View Additional Fields">📋</span>
+<div id="modal20305" class="modal">
+<div class="modal-content">
+<span class="modal-close" onclick="closeModal('modal20305')">&times;</span>
+<h3>Additional Fields</h3>
+<pre class="json-display">{&quot;Directory&quot;: &quot;C:\\Users\\Defender-Gorgonas\\Downloads&quot;, &quot;Name&quot;: &quot;Benzoate.exe&quot;, &quot;Host&quot;: {&quot;$id&quot;: &quot;2&quot;, &quot;HostName&quot;: &quot;desktop-u52hjmc&quot;, &quot;NetBiosName&quot;: &quot;desktop-u52hjmc&quot;, &quot;OSFamily&quot;: &quot;Windows&quot;, &quot;OSVersion&quot;: &quot;10.0&quot;, &quot;IsDomainJoined&quot;: false, &quot;RemediationProviders&quot;: [{&quot;RemediationState&quot;: &quot;Active&quot;, &quot;RemediationDate&quot;: &quot;2026-01-14T17:11:28.9107386Z&quot;, &quot;Type&quot;: &quot;remediation-provider&quot;}], &quot;LastRemediationState&quot;: &quot;Active&quot;, &quot;ThreatAnalysisSummary&quot;: [{&quot;AnalyzersResult&quot;: [], &quot;Verdict&quot;: &quot;Suspicious&quot;, &quot;AnalysisDate&quot;: &quot;2026-01-14T17:11:28.9107386Z&quot;}], &quot;LastVerdict&quot;: &quot;Suspicious&quot;, &quot;Asset&quot;: true, &quot;DetailedRoles&quot;: [&quot;PrimaryDevice&quot;], &quot;RbacScopes&quot;: {&quot;ScopesPerType&quot;: {&quot;MachineGroupIds&quot;: {&quot;Mode&quot;: &quot;Any&quot;, &quot;Scopes&quot;: [&quot;318&quot;]}, &quot;Workloads&quot;: {&quot;Mode&quot;: &quot;All&quot;, &quot;Scopes&quot;: [&quot;Mdatp&quot;]}}}, &quot;Type&quot;: &quot;host&quot;, &quot;LeadingHost&quot;: true, &quot;Role&quot;: 0, &quot;MachineId&quot;: &quot;29dc029e30d0be0c7f2d0a3b53b222d068bc50b5&quot;, &quot;MachineIdType&quot;: 3, &quot;HostMachineId&quot;: null, &quot;DetectionStatus&quot;: &quot;Detected&quot;, &quot;SuspicionLevel&quot;: &quot;Suspicious&quot;, &quot;IsIoc&quot;: false, &quot;MergeByKey&quot;: &quot;PuuQHHLwS+8/npR8IvNLevUkuaM=&quot;, &quot;MergeByKeyHex&quot;: &quot;3EEB901C72F04BEF3F9E947C22F34B7AF524B9A3&quot;}, &quot;FileHashes&quot;: [{&quot;$id&quot;: &quot;3&quot;, &quot;Algorithm&quot;: &quot;SHA1&quot;, &quot;Value&quot;: &quot;eb688e699c5caf1a64a1dcaab135737d57d86135&quot;, &quot;Type&quot;: &quot;filehash&quot;}, {&quot;$id&quot;: &quot;4&quot;, &quot;Algorithm&quot;: &quot;SHA256&quot;, &quot;Value&quot;: &quot;a5516705158cbd94ac4cc1869bed94ac0ff75f9ec42b057db18e8261d2af6b0f&quot;, &quot;Type&quot;: &quot;filehash&quot;}], &quot;RemediationProviders&quot;: [{&quot;RemediationState&quot;: &quot;Prevented&quot;, &quot;RemediationDate&quot;: &quot;2026-01-14T17:00:20.7077164Z&quot;, &quot;Type&quot;: &quot;remediation-provider&quot;}], &quot;LastRemediationState&quot;: &quot;Prevented&quot;, &quot;ThreatAnalysisSummary&quot;: [{&quot;AnalyzersResult&quot;: [], &quot;Verdict&quot;: &quot;Malicious&quot;, &quot;AnalysisDate&quot;: &quot;2026-01-14T17:00:15.0294667Z&quot;}], &quot;LastVerdict&quot;: &quot;Malicious&quot;, &quot;RbacScopes&quot;: {&quot;ScopesPerType&quot;: {&quot;MachineGroupIds&quot;: {&quot;Mode&quot;: &quot;Any&quot;, &quot;Scopes&quot;: [&quot;318&quot;]}, &quot;Workloads&quot;: {&quot;Mode&quot;: &quot;All&quot;, &quot;Scopes&quot;: [&quot;Mdatp&quot;]}}}, &quot;Type&quot;: &quot;file&quot;, &quot;ReferenceId&quot;: &quot;c33a0723-ebae-4f67-983c-351e2fcb5806:a7cdb3e73726&quot;, &quot;DetectionStatus&quot;: &quot;Prevented&quot;, &quot;ThreatFamilyName&quot;: &quot;Wacatac&quot;, &quot;SuspicionLevel&quot;: &quot;Suspicious&quot;, &quot;IsIoc&quot;: true, &quot;Role&quot;: 1, &quot;MergeByKey&quot;: &quot;Yf1KiI45tOJOl4KC6pkj8vLwckM=&quot;, &quot;MergeByKeyHex&quot;: &quot;61FD4A888E39B4E24E978282EA9923F2F2F07243&quot;}</pre>
+</div>
+</div></div>
+</label>
+<div class="collapsible-details">
+<div class="process-details">
+<div class="detail-row"><strong>Alert:</strong> &#x27;Wacatac&#x27; malware was prevented</div>
+<div class="detail-row"><strong>Path:</strong> C:\Users\Defender-Gorgonas\Downloads</div>
+<div class="detail-row sha"><strong>SHA1:</strong> eb688e699c5caf1a64a1dcaab135737d57d86135 <span class="copy-icon hash-copy" onclick="copyHash('eb688e699c5caf1a64a1dcaab135737d57d86135', event)" title="Copy SHA1">⿻</span></div>
+<div class="detail-row sha"><strong>SHA256:</strong> a5516705158cbd94ac4cc1869bed94ac0ff75f9ec42b057db18e8261d2af6b0f <span class="copy-icon hash-copy" onclick="copyHash('a5516705158cbd94ac4cc1869bed94ac0ff75f9ec42b057db18e8261d2af6b0f', event)" title="Copy SHA256">⿻</span></div>
+<div class="detail-row"><strong>Timestamp:</strong> 2026-01-14 17:00:20</div>
+</div>
+</div>
+</li>
+<li>
+<input type="checkbox" id="evidence20306" class="collapsible-checkbox">
+<label for="evidence20306" class="process-wrapper">
+<div class="process evidence-node machine">
+<span class="expand-indicator"></span>
+<span class="process-name">desktop-u52hjmc</span>
+<span class="process-timestamp">2026-01-14 17:00:34</span>
+<span class="entity-badge">Machine</span>
+<span class="evidence-role impacted">Impacted</span>
+<span class="badge badge-detected">Detected</span>
+<span class="info-icon" onclick="showModal('modal20306')" title="View Additional Fields">📋</span>
+<div id="modal20306" class="modal">
+<div class="modal-content">
+<span class="modal-close" onclick="closeModal('modal20306')">&times;</span>
+<h3>Additional Fields</h3>
+<pre class="json-display">{&quot;HostName&quot;: &quot;desktop-u52hjmc&quot;, &quot;NetBiosName&quot;: &quot;desktop-u52hjmc&quot;, &quot;OSFamily&quot;: &quot;Windows&quot;, &quot;OSVersion&quot;: &quot;10.0&quot;, &quot;IsDomainJoined&quot;: false, &quot;IpInterfaces&quot;: [{&quot;$id&quot;: &quot;2&quot;, &quot;Address&quot;: &quot;172.20.22.108&quot;, &quot;Type&quot;: &quot;ip&quot;}, {&quot;$id&quot;: &quot;3&quot;, &quot;Address&quot;: &quot;fe80::b336:58f2:88cf:e3a5&quot;, &quot;Type&quot;: &quot;ip&quot;}, {&quot;$id&quot;: &quot;4&quot;, &quot;Address&quot;: &quot;127.0.0.1&quot;, &quot;Type&quot;: &quot;ip&quot;}, {&quot;$id&quot;: &quot;5&quot;, &quot;Address&quot;: &quot;::1&quot;, &quot;Type&quot;: &quot;ip&quot;}], &quot;RemediationProviders&quot;: [{&quot;RemediationState&quot;: &quot;Active&quot;, &quot;RemediationDate&quot;: &quot;2026-01-14T17:01:51.8506496Z&quot;, &quot;Type&quot;: &quot;remediation-provider&quot;}], &quot;LastRemediationState&quot;: &quot;Active&quot;, &quot;ThreatAnalysisSummary&quot;: [{&quot;AnalyzersResult&quot;: [], &quot;Verdict&quot;: &quot;Suspicious&quot;, &quot;AnalysisDate&quot;: &quot;2026-01-14T17:01:51.8506496Z&quot;}], &quot;LastVerdict&quot;: &quot;Suspicious&quot;, &quot;Asset&quot;: true, &quot;DetailedRoles&quot;: [&quot;PrimaryDevice&quot;], &quot;RbacScopes&quot;: {&quot;ScopesPerType&quot;: {&quot;MachineGroupIds&quot;: {&quot;Mode&quot;: &quot;Any&quot;, &quot;Scopes&quot;: [&quot;318&quot;]}, &quot;Workloads&quot;: {&quot;Mode&quot;: &quot;All&quot;, &quot;Scopes&quot;: [&quot;Mdatp&quot;]}}}, &quot;Type&quot;: &quot;host&quot;, &quot;LeadingHost&quot;: true, &quot;Role&quot;: 0, &quot;MachineId&quot;: &quot;29dc029e30d0be0c7f2d0a3b53b222d068bc50b5&quot;, &quot;MachineIdType&quot;: 3, &quot;HostMachineId&quot;: null, &quot;DetectionStatus&quot;: &quot;Detected&quot;, &quot;SuspicionLevel&quot;: &quot;Suspicious&quot;, &quot;EnrichmentType&quot;: &quot;MachineIpInterfacesEnrichment&quot;, &quot;IsIoc&quot;: false, &quot;MergeByKey&quot;: &quot;PuuQHHLwS+8/npR8IvNLevUkuaM=&quot;, &quot;MergeByKeyHex&quot;: &quot;3EEB901C72F04BEF3F9E947C22F34B7AF524B9A3&quot;}</pre>
+</div>
+</div></div>
+</label>
+<div class="collapsible-details">
+<div class="process-details">
+<div class="detail-row"><strong>Alert:</strong> &#x27;Wacatac&#x27; malware was detected</div>
+<div class="detail-row"><strong>Device ID:</strong> 29dc029e30d0be0c7f2d0a3b53b222d0...</div>
+<div class="detail-row"><strong>Timestamp:</strong> 2026-01-14 17:00:34</div>
+</div>
+</div>
+</li>
+<li>
+<input type="checkbox" id="evidence20307" class="collapsible-checkbox">
+<label for="evidence20307" class="process-wrapper">
+<div class="process evidence-node file">
+<span class="expand-indicator"></span>
+<span class="process-name">armstronium.zip</span>
+<span class="process-timestamp">2026-01-14 17:00:34</span>
+<span class="entity-badge">File</span>
+<span class="evidence-role related">Related</span>
+<span class="badge badge-malicious">Malicious</span>
+<span class="badge badge-ioc">IOC</span>
+<span class="threat-family-badge">Wacatac</span>
+<span class="info-icon" onclick="showModal('modal20307')" title="View Additional Fields">📋</span>
+<div id="modal20307" class="modal">
+<div class="modal-content">
+<span class="modal-close" onclick="closeModal('modal20307')">&times;</span>
+<h3>Additional Fields</h3>
+<pre class="json-display">{&quot;Directory&quot;: &quot;C:\\Users\\Defender-Gorgonas\\Downloads&quot;, &quot;Name&quot;: &quot;armstronium.zip&quot;, &quot;Host&quot;: {&quot;$id&quot;: &quot;2&quot;, &quot;HostName&quot;: &quot;desktop-u52hjmc&quot;, &quot;NetBiosName&quot;: &quot;desktop-u52hjmc&quot;, &quot;OSFamily&quot;: &quot;Windows&quot;, &quot;OSVersion&quot;: &quot;10.0&quot;, &quot;IsDomainJoined&quot;: false, &quot;IpInterfaces&quot;: [{&quot;$id&quot;: &quot;3&quot;, &quot;Address&quot;: &quot;172.20.22.108&quot;, &quot;Type&quot;: &quot;ip&quot;}, {&quot;$id&quot;: &quot;4&quot;, &quot;Address&quot;: &quot;fe80::b336:58f2:88cf:e3a5&quot;, &quot;Type&quot;: &quot;ip&quot;}, {&quot;$id&quot;: &quot;5&quot;, &quot;Address&quot;: &quot;127.0.0.1&quot;, &quot;Type&quot;: &quot;ip&quot;}, {&quot;$id&quot;: &quot;6&quot;, &quot;Address&quot;: &quot;::1&quot;, &quot;Type&quot;: &quot;ip&quot;}], &quot;RemediationProviders&quot;: [{&quot;RemediationState&quot;: &quot;Active&quot;, &quot;RemediationDate&quot;: &quot;2026-01-14T17:01:51.8506496Z&quot;, &quot;Type&quot;: &quot;remediation-provider&quot;}], &quot;LastRemediationState&quot;: &quot;Active&quot;, &quot;ThreatAnalysisSummary&quot;: [{&quot;AnalyzersResult&quot;: [], &quot;Verdict&quot;: &quot;Suspicious&quot;, &quot;AnalysisDate&quot;: &quot;2026-01-14T17:01:51.8506496Z&quot;}], &quot;LastVerdict&quot;: &quot;Suspicious&quot;, &quot;Asset&quot;: true, &quot;DetailedRoles&quot;: [&quot;PrimaryDevice&quot;], &quot;RbacScopes&quot;: {&quot;ScopesPerType&quot;: {&quot;MachineGroupIds&quot;: {&quot;Mode&quot;: &quot;Any&quot;, &quot;Scopes&quot;: [&quot;318&quot;]}, &quot;Workloads&quot;: {&quot;Mode&quot;: &quot;All&quot;, &quot;Scopes&quot;: [&quot;Mdatp&quot;]}}}, &quot;Type&quot;: &quot;host&quot;, &quot;LeadingHost&quot;: true, &quot;Role&quot;: 0, &quot;MachineId&quot;: &quot;29dc029e30d0be0c7f2d0a3b53b222d068bc50b5&quot;, &quot;MachineIdType&quot;: 3, &quot;HostMachineId&quot;: null, &quot;DetectionStatus&quot;: &quot;Detected&quot;, &quot;SuspicionLevel&quot;: &quot;Suspicious&quot;, &quot;EnrichmentType&quot;: &quot;MachineIpInterfacesEnrichment&quot;, &quot;IsIoc&quot;: false, &quot;MergeByKey&quot;: &quot;PuuQHHLwS+8/npR8IvNLevUkuaM=&quot;, &quot;MergeByKeyHex&quot;: &quot;3EEB901C72F04BEF3F9E947C22F34B7AF524B9A3&quot;}, &quot;HostUrl&quot;: {&quot;$id&quot;: &quot;7&quot;, &quot;Url&quot;: &quot;https://github.com/&quot;, &quot;Type&quot;: &quot;url&quot;}, &quot;SizeInBytes&quot;: 259171, &quot;FileHashes&quot;: [{&quot;$id&quot;: &quot;8&quot;, &quot;Algorithm&quot;: &quot;SHA1&quot;, &quot;Value&quot;: &quot;07ac572c3d634de03d767e04dea92e526d5a09bc&quot;, &quot;Type&quot;: &quot;filehash&quot;}, {&quot;$id&quot;: &quot;9&quot;, &quot;Algorithm&quot;: &quot;MD5&quot;, &quot;Value&quot;: &quot;4777a3b7fffe93393576cbe4a40bcf42&quot;, &quot;Type&quot;: &quot;filehash&quot;}, {&quot;$id&quot;: &quot;10&quot;, &quot;Algorithm&quot;: &quot;SHA256&quot;, &quot;Value&quot;: &quot;c9f3a0f84338fe40deb27879c9f2048187547bd04d4ff64f5c9b9ec933a37a55&quot;, &quot;Type&quot;: &quot;filehash&quot;}], &quot;RemediationProviders&quot;: [{&quot;RemediationState&quot;: &quot;Active&quot;, &quot;RemediationDate&quot;: &quot;2026-01-14T17:00:34.5753763Z&quot;, &quot;Type&quot;: &quot;remediation-provider&quot;}], &quot;LastRemediationState&quot;: &quot;Active&quot;, &quot;ThreatAnalysisSummary&quot;: [{&quot;AnalyzersResult&quot;: [], &quot;Verdict&quot;: &quot;Malicious&quot;, &quot;AnalysisDate&quot;: &quot;2026-01-14T17:00:34.5753763Z&quot;}], &quot;LastVerdict&quot;: &quot;Malicious&quot;, &quot;RbacScopes&quot;: {&quot;ScopesPerType&quot;: {&quot;MachineGroupIds&quot;: {&quot;Mode&quot;: &quot;Any&quot;, &quot;Scopes&quot;: [&quot;318&quot;]}, &quot;Workloads&quot;: {&quot;Mode&quot;: &quot;All&quot;, &quot;Scopes&quot;: [&quot;Mdatp&quot;]}}}, &quot;Type&quot;: &quot;file&quot;, &quot;LsHash&quot;: &quot;7fbbba6fe5b5be6fbd6975eae596fddb5f96e696aded99ffa9fdde7d6565a75ba9ebeaaf7a6a557fbf6beb75b6bdb59fdad56f5666de6e75d6ad6f6df779fba6&quot;, &quot;ReferenceId&quot;: &quot;c0bfa4a1-3d68-40d9-9020-bd746777d229:a7cdb3e73726&quot;, &quot;DetectionStatus&quot;: &quot;Detected&quot;, &quot;ThreatFamilyName&quot;: &quot;Wacatac&quot;, &quot;SuspicionLevel&quot;: &quot;Suspicious&quot;, &quot;EnrichmentType&quot;: &quot;FilePrevalenceEnrichment&quot;, &quot;IsIoc&quot;: true, &quot;Role&quot;: 1, &quot;MergeByKey&quot;: &quot;RgKIuMeba0jaZzx+yW2uJNiwUlY=&quot;, &quot;MergeByKeyHex&quot;: &quot;460288B8C79B6B48DA673C7EC96DAE24D8B05256&quot;}</pre>
+</div>
+</div></div>
+</label>
+<div class="collapsible-details">
+<div class="process-details">
+<div class="detail-row"><strong>Alert:</strong> &#x27;Wacatac&#x27; malware was detected</div>
+<div class="detail-row"><strong>Path:</strong> C:\Users\Defender-Gorgonas\Downloads</div>
+<div class="detail-row sha"><strong>SHA1:</strong> 07ac572c3d634de03d767e04dea92e526d5a09bc <span class="copy-icon hash-copy" onclick="copyHash('07ac572c3d634de03d767e04dea92e526d5a09bc', event)" title="Copy SHA1">⿻</span></div>
+<div class="detail-row sha"><strong>SHA256:</strong> c9f3a0f84338fe40deb27879c9f2048187547bd04d4ff64f5c9b9ec933a37a55 <span class="copy-icon hash-copy" onclick="copyHash('c9f3a0f84338fe40deb27879c9f2048187547bd04d4ff64f5c9b9ec933a37a55', event)" title="Copy SHA256">⿻</span></div>
+<div class="detail-row"><strong>Timestamp:</strong> 2026-01-14 17:00:34</div>
+</div>
+</div>
+</li>
+<li>
+<input type="checkbox" id="evidence20308" class="collapsible-checkbox">
+<label for="evidence20308" class="process-wrapper">
+<div class="process evidence-node url">
+<span class="expand-indicator"></span>
+<span class="process-name">https://github.com/</span>
+<span class="process-timestamp">2026-01-14 17:00:34</span>
+<span class="entity-badge">Url</span>
+<span class="evidence-role related">Related</span>
+<span class="badge badge-malicious">Malicious</span>
+<span class="badge badge-ioc">IOC</span>
+<span class="info-icon" onclick="showModal('modal20308')" title="View Additional Fields">📋</span>
+<div id="modal20308" class="modal">
+<div class="modal-content">
+<span class="modal-close" onclick="closeModal('modal20308')">&times;</span>
+<h3>Additional Fields</h3>
+<pre class="json-display">{&quot;Url&quot;: &quot;https://github.com/&quot;, &quot;RemediationProviders&quot;: [{&quot;RemediationState&quot;: &quot;Active&quot;, &quot;RemediationDate&quot;: &quot;2026-01-14T17:00:34.5753763Z&quot;, &quot;Type&quot;: &quot;remediation-provider&quot;}], &quot;LastRemediationState&quot;: &quot;Active&quot;, &quot;ThreatAnalysisSummary&quot;: [{&quot;AnalyzersResult&quot;: [], &quot;Verdict&quot;: &quot;Malicious&quot;, &quot;AnalysisDate&quot;: &quot;2026-01-14T17:00:34.5753763Z&quot;}], &quot;LastVerdict&quot;: &quot;Malicious&quot;, &quot;RbacScopes&quot;: {&quot;ScopesPerType&quot;: {&quot;MachineGroupIds&quot;: {&quot;Mode&quot;: &quot;Any&quot;, &quot;Scopes&quot;: [&quot;318&quot;]}, &quot;Workloads&quot;: {&quot;Mode&quot;: &quot;All&quot;, &quot;Scopes&quot;: [&quot;Mdatp&quot;]}}}, &quot;Type&quot;: &quot;url&quot;, &quot;ReferenceId&quot;: &quot;c0bfa4a1-3d68-40d9-9020-bd746777d229:24a2c8474ddb&quot;, &quot;ObservedByDevice&quot;: {&quot;HostName&quot;: &quot;desktop-u52hjmc&quot;, &quot;NetBiosName&quot;: &quot;desktop-u52hjmc&quot;, &quot;OSFamily&quot;: &quot;Windows&quot;, &quot;OSVersion&quot;: &quot;10.0&quot;, &quot;IsDomainJoined&quot;: false, &quot;Asset&quot;: true, &quot;DetailedRoles&quot;: [&quot;PrimaryDevice&quot;], &quot;RbacScopes&quot;: {&quot;ScopesPerType&quot;: {&quot;MachineGroupIds&quot;: {&quot;Mode&quot;: &quot;Any&quot;, &quot;Scopes&quot;: [&quot;318&quot;]}, &quot;Workloads&quot;: {&quot;Mode&quot;: &quot;All&quot;, &quot;Scopes&quot;: [&quot;Mdatp&quot;]}}}, &quot;Type&quot;: &quot;host&quot;, &quot;LeadingHost&quot;: true, &quot;Role&quot;: 0, &quot;MachineId&quot;: &quot;29dc029e30d0be0c7f2d0a3b53b222d068bc50b5&quot;, &quot;MachineIdType&quot;: 3, &quot;HostMachineId&quot;: null}, &quot;DetectionStatus&quot;: &quot;Detected&quot;, &quot;ThreatFamilyName&quot;: &quot;Wacatac&quot;, &quot;SuspicionLevel&quot;: &quot;Suspicious&quot;, &quot;IsIoc&quot;: true, &quot;Role&quot;: 1, &quot;MergeByKey&quot;: &quot;76lySxx2MYoEs77q7qVqiI1Xn6M=&quot;, &quot;MergeByKeyHex&quot;: &quot;EFA9724B1C76318A04B3BEEAEEA56A888D579FA3&quot;}</pre>
+</div>
+</div></div>
+</label>
+<div class="collapsible-details">
+<div class="process-details">
+<div class="detail-row"><strong>Alert:</strong> &#x27;Wacatac&#x27; malware was detected</div>
+<div class="detail-row"><strong>Full URL:</strong> <a href="https://github.com/" target="_blank">https://github.com/</a></div>
+<div class="detail-row"><strong>Timestamp:</strong> 2026-01-14 17:00:34</div>
+</div>
+</div>
+</li>
+<li>
+<input type="checkbox" id="evidence20309" class="collapsible-checkbox">
+<label for="evidence20309" class="process-wrapper">
+<div class="process evidence-node machine">
+<span class="expand-indicator"></span>
+<span class="process-name">desktop-u52hjmc</span>
+<span class="process-timestamp">2026-01-14 17:00:39</span>
+<span class="entity-badge">Machine</span>
+<span class="evidence-role impacted">Impacted</span>
+<span class="badge badge-detected">Detected</span>
+<span class="info-icon" onclick="showModal('modal20309')" title="View Additional Fields">📋</span>
+<div id="modal20309" class="modal">
+<div class="modal-content">
+<span class="modal-close" onclick="closeModal('modal20309')">&times;</span>
+<h3>Additional Fields</h3>
+<pre class="json-display">{&quot;HostName&quot;: &quot;desktop-u52hjmc&quot;, &quot;NetBiosName&quot;: &quot;desktop-u52hjmc&quot;, &quot;OSFamily&quot;: &quot;Windows&quot;, &quot;OSVersion&quot;: &quot;10.0&quot;, &quot;IsDomainJoined&quot;: false, &quot;RemediationProviders&quot;: [{&quot;RemediationState&quot;: &quot;Active&quot;, &quot;RemediationDate&quot;: &quot;2026-01-14T17:11:29.418354Z&quot;, &quot;Type&quot;: &quot;remediation-provider&quot;}], &quot;LastRemediationState&quot;: &quot;Active&quot;, &quot;ThreatAnalysisSummary&quot;: [{&quot;AnalyzersResult&quot;: [], &quot;Verdict&quot;: &quot;Suspicious&quot;, &quot;AnalysisDate&quot;: &quot;2026-01-14T17:11:29.418354Z&quot;}], &quot;LastVerdict&quot;: &quot;Suspicious&quot;, &quot;Asset&quot;: true, &quot;DetailedRoles&quot;: [&quot;PrimaryDevice&quot;], &quot;RbacScopes&quot;: {&quot;ScopesPerType&quot;: {&quot;MachineGroupIds&quot;: {&quot;Mode&quot;: &quot;Any&quot;, &quot;Scopes&quot;: [&quot;318&quot;]}, &quot;Workloads&quot;: {&quot;Mode&quot;: &quot;All&quot;, &quot;Scopes&quot;: [&quot;Mdatp&quot;]}}}, &quot;Type&quot;: &quot;host&quot;, &quot;LeadingHost&quot;: true, &quot;Role&quot;: 0, &quot;MachineId&quot;: &quot;29dc029e30d0be0c7f2d0a3b53b222d068bc50b5&quot;, &quot;MachineIdType&quot;: 3, &quot;HostMachineId&quot;: null, &quot;DetectionStatus&quot;: &quot;Detected&quot;, &quot;SuspicionLevel&quot;: &quot;Suspicious&quot;, &quot;IsIoc&quot;: false, &quot;MergeByKey&quot;: &quot;PuuQHHLwS+8/npR8IvNLevUkuaM=&quot;, &quot;MergeByKeyHex&quot;: &quot;3EEB901C72F04BEF3F9E947C22F34B7AF524B9A3&quot;}</pre>
+</div>
+</div></div>
+</label>
+<div class="collapsible-details">
+<div class="process-details">
+<div class="detail-row"><strong>Alert:</strong> &#x27;Wacatac&#x27; malware was prevented</div>
+<div class="detail-row"><strong>Device ID:</strong> 29dc029e30d0be0c7f2d0a3b53b222d0...</div>
+<div class="detail-row"><strong>Timestamp:</strong> 2026-01-14 17:00:39</div>
+</div>
+</div>
+</li>
+<li>
+<input type="checkbox" id="evidence20310" class="collapsible-checkbox">
+<label for="evidence20310" class="process-wrapper">
+<div class="process evidence-node file">
+<span class="expand-indicator"></span>
+<span class="process-name">armstronium.zip</span>
+<span class="process-timestamp">2026-01-14 17:00:39</span>
+<span class="entity-badge">File</span>
+<span class="evidence-role related">Related</span>
+<span class="badge badge-prevented">Prevented</span>
+<span class="badge badge-ioc">IOC</span>
+<span class="threat-family-badge">Wacatac</span>
+<span class="info-icon" onclick="showModal('modal20310')" title="View Additional Fields">📋</span>
+<div id="modal20310" class="modal">
+<div class="modal-content">
+<span class="modal-close" onclick="closeModal('modal20310')">&times;</span>
+<h3>Additional Fields</h3>
+<pre class="json-display">{&quot;Directory&quot;: &quot;C:\\Users\\Defender-Gorgonas\\Downloads&quot;, &quot;Name&quot;: &quot;armstronium.zip&quot;, &quot;Host&quot;: {&quot;$id&quot;: &quot;2&quot;, &quot;HostName&quot;: &quot;desktop-u52hjmc&quot;, &quot;NetBiosName&quot;: &quot;desktop-u52hjmc&quot;, &quot;OSFamily&quot;: &quot;Windows&quot;, &quot;OSVersion&quot;: &quot;10.0&quot;, &quot;IsDomainJoined&quot;: false, &quot;RemediationProviders&quot;: [{&quot;RemediationState&quot;: &quot;Active&quot;, &quot;RemediationDate&quot;: &quot;2026-01-14T17:11:29.418354Z&quot;, &quot;Type&quot;: &quot;remediation-provider&quot;}], &quot;LastRemediationState&quot;: &quot;Active&quot;, &quot;ThreatAnalysisSummary&quot;: [{&quot;AnalyzersResult&quot;: [], &quot;Verdict&quot;: &quot;Suspicious&quot;, &quot;AnalysisDate&quot;: &quot;2026-01-14T17:11:29.418354Z&quot;}], &quot;LastVerdict&quot;: &quot;Suspicious&quot;, &quot;Asset&quot;: true, &quot;DetailedRoles&quot;: [&quot;PrimaryDevice&quot;], &quot;RbacScopes&quot;: {&quot;ScopesPerType&quot;: {&quot;MachineGroupIds&quot;: {&quot;Mode&quot;: &quot;Any&quot;, &quot;Scopes&quot;: [&quot;318&quot;]}, &quot;Workloads&quot;: {&quot;Mode&quot;: &quot;All&quot;, &quot;Scopes&quot;: [&quot;Mdatp&quot;]}}}, &quot;Type&quot;: &quot;host&quot;, &quot;LeadingHost&quot;: true, &quot;Role&quot;: 0, &quot;MachineId&quot;: &quot;29dc029e30d0be0c7f2d0a3b53b222d068bc50b5&quot;, &quot;MachineIdType&quot;: 3, &quot;HostMachineId&quot;: null, &quot;DetectionStatus&quot;: &quot;Detected&quot;, &quot;SuspicionLevel&quot;: &quot;Suspicious&quot;, &quot;IsIoc&quot;: false, &quot;MergeByKey&quot;: &quot;PuuQHHLwS+8/npR8IvNLevUkuaM=&quot;, &quot;MergeByKeyHex&quot;: &quot;3EEB901C72F04BEF3F9E947C22F34B7AF524B9A3&quot;}, &quot;FileHashes&quot;: [{&quot;$id&quot;: &quot;3&quot;, &quot;Algorithm&quot;: &quot;SHA1&quot;, &quot;Value&quot;: &quot;07ac572c3d634de03d767e04dea92e526d5a09bc&quot;, &quot;Type&quot;: &quot;filehash&quot;}, {&quot;$id&quot;: &quot;4&quot;, &quot;Algorithm&quot;: &quot;SHA256&quot;, &quot;Value&quot;: &quot;c9f3a0f84338fe40deb27879c9f2048187547bd04d4ff64f5c9b9ec933a37a55&quot;, &quot;Type&quot;: &quot;filehash&quot;}], &quot;RemediationProviders&quot;: [{&quot;RemediationState&quot;: &quot;Prevented&quot;, &quot;RemediationDate&quot;: &quot;2026-01-14T17:00:39.6443513Z&quot;, &quot;Type&quot;: &quot;remediation-provider&quot;}], &quot;LastRemediationState&quot;: &quot;Prevented&quot;, &quot;ThreatAnalysisSummary&quot;: [{&quot;AnalyzersResult&quot;: [], &quot;Verdict&quot;: &quot;Malicious&quot;, &quot;AnalysisDate&quot;: &quot;2026-01-14T17:00:34.5878143Z&quot;}], &quot;LastVerdict&quot;: &quot;Malicious&quot;, &quot;RbacScopes&quot;: {&quot;ScopesPerType&quot;: {&quot;MachineGroupIds&quot;: {&quot;Mode&quot;: &quot;Any&quot;, &quot;Scopes&quot;: [&quot;318&quot;]}, &quot;Workloads&quot;: {&quot;Mode&quot;: &quot;All&quot;, &quot;Scopes&quot;: [&quot;Mdatp&quot;]}}}, &quot;Type&quot;: &quot;file&quot;, &quot;ReferenceId&quot;: &quot;3ffd7c1c-f192-4bc7-9047-0cae26004149:a7cdb3e73726&quot;, &quot;DetectionStatus&quot;: &quot;Prevented&quot;, &quot;ThreatFamilyName&quot;: &quot;Wacatac&quot;, &quot;SuspicionLevel&quot;: &quot;Suspicious&quot;, &quot;IsIoc&quot;: true, &quot;Role&quot;: 1, &quot;MergeByKey&quot;: &quot;RgKIuMeba0jaZzx+yW2uJNiwUlY=&quot;, &quot;MergeByKeyHex&quot;: &quot;460288B8C79B6B48DA673C7EC96DAE24D8B05256&quot;}</pre>
+</div>
+</div></div>
+</label>
+<div class="collapsible-details">
+<div class="process-details">
+<div class="detail-row"><strong>Alert:</strong> &#x27;Wacatac&#x27; malware was prevented</div>
+<div class="detail-row"><strong>Path:</strong> C:\Users\Defender-Gorgonas\Downloads</div>
+<div class="detail-row sha"><strong>SHA1:</strong> 07ac572c3d634de03d767e04dea92e526d5a09bc <span class="copy-icon hash-copy" onclick="copyHash('07ac572c3d634de03d767e04dea92e526d5a09bc', event)" title="Copy SHA1">⿻</span></div>
+<div class="detail-row sha"><strong>SHA256:</strong> c9f3a0f84338fe40deb27879c9f2048187547bd04d4ff64f5c9b9ec933a37a55 <span class="copy-icon hash-copy" onclick="copyHash('c9f3a0f84338fe40deb27879c9f2048187547bd04d4ff64f5c9b9ec933a37a55', event)" title="Copy SHA256">⿻</span></div>
+<div class="detail-row"><strong>Timestamp:</strong> 2026-01-14 17:00:39</div>
+</div>
+</div>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+
+</div>
+</body>
+</html>
